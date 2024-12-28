@@ -1,0 +1,21 @@
+coverage:
+  exclude:
+    - 'github.com/nao1215/vogen/testdata/*.go'
+  if: true
+  acceptable: 30%
+  badge:
+    path: docs/coverage.svg
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+comment:
+  if: is_pull_request
+summary:
+  if: true
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+codeToTestRatio:
+  badge:
+    path: docs/ratio.svg
