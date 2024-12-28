@@ -1,3 +1,3 @@
 module github.com/nao1215/vogen
 
-go 1.21
+go 1.22
