@@ -29,43 +29,47 @@ import (
 //go:generate go run main.go
 
 func main() {
-	// Step 1: Define the ValueObject configuration
-	vo := vogen.ValueObject{
-		StructName: "Person",
-		Fields: []vogen.Field{
-			{Name: "Name", Type: "string"},
-			{Name: "Age", Type: "int"},
-		},
-		Imports: []string{"fmt"},
-	}
-
-	// Step 2: Create a Vogen instance with custom file path and package name
+	// Step 1: Create a Vogen instance with custom file path and package name.
+	// By default, the file path is "value_objects.go" and the package name is "vo".
 	gen, err := vogen.New(
-		vogen.WithFilePath(filepath.Join("..", "example_vo.go")),
-		vogen.WithPackageName("vo"),
+		vogen.WithFilePath(filepath.Join("testdata", "example_output.go")),
+		vogen.WithPackageName("vo_example"),
 	)
 	if err != nil {
 		fmt.Printf("Failed to create Vogen instance: %v\n", err)
 		return
 	}
 
-	// Step 3: Append the ValueObject definition
-	if err := gen.AppendValueObjects(vo); err != nil {
+	// Step 2: Append the ValueObject definition
+	if err := gen.AppendValueObjects(
+		vogen.ValueObject{
+			StructName: "Person",
+			Fields: []vogen.Field{
+				{Name: "Name", Type: "string", Comments: []string{"Name is the name of the person."}},
+				{Name: "Age", Type: "int", Comments: []string{"Age is the age of the person."}},
+			},
+			Comments: []string{
+				"Person is a Value Object to describe the feature of vogen.",
+				"This is sample comment.",
+			},
+		},
+		// Use auto generated comments.
+		vogen.ValueObject{
+			StructName: "Address",
+			Fields: []vogen.Field{
+				{Name: "City", Type: "string"},
+			},
+		},
+	); err != nil {
 		fmt.Printf("Failed to append ValueObject: %v\n", err)
 		return
 	}
 
-	// Step 4: Generate the code
+	// Step 3: Generate the code
 	if err := gen.Generate(); err != nil {
 		fmt.Printf("Failed to generate code: %v\n", err)
 		return
 	}
-
-	// Step 5: Output success message
-	fmt.Println("Code generated successfully. Check '../example_vo.go' for the output.")
-
-	// Output:
-	// Code generated successfully. Check '../example_vo.go' for the output.
 }
 ```
 
@@ -79,10 +83,13 @@ import (
 	"fmt"
 )
 
-// Person represents a value object.
+// Person is a Value Object to describe the feature of vogen.
+// This is sample comment.
 type Person struct {
+	// Name is the name of the person.
 	name string
-	age  int
+	// Age is the age of the person.
+	age int
 }
 
 // NewPerson creates a new instance of Person.
@@ -103,6 +110,26 @@ func (o Person) Age() int {
 // Equal checks if two Person objects are equal.
 func (o Person) Equal(other Person) bool {
 	return o.Name() == other.Name() && o.Age() == other.Age()
+}
+
+// Address represents a value object.
+type Address struct {
+	city string
+}
+
+// NewAddress creates a new instance of Address.
+func NewAddress(city string) Address {
+	return Address{city: city}
+}
+
+// City returns the city field.
+func (o Address) City() string {
+	return o.city
+}
+
+// Equal checks if two Address objects are equal.
+func (o Address) Equal(other Address) bool {
+	return o.City() == other.City()
 }
 ```
 
