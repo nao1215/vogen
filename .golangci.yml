@@ -7,16 +7,13 @@ issues:
 linters:
   disable-all: true
   enable:
-    - deadcode
     - errcheck
     - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
     - unused
-    - varcheck
     - asciicheck
     - bodyclose
     - dogsled
@@ -24,16 +21,14 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - gochecknoglobals
     - gochecknoinits
     - goconst
     - gocritic
     - goimports
-    - gomnd
-    - gosec
-    - ifshort
+    - gosec 
     - misspell
     - nakedret
     - noctx

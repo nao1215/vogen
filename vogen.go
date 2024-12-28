@@ -75,9 +75,7 @@ func (vo *Vogen) AppendValueObjects(vos ...ValueObject) error {
 	if err := vo.validate(vos...); err != nil {
 		return err
 	}
-	for _, v := range vos {
-		vo.valueObjects = append(vo.valueObjects, v)
-	}
+	vo.valueObjects = append(vo.valueObjects, vos...)
 	return nil
 }
 
@@ -267,10 +265,10 @@ func (vo *Vogen) generateFile() error {
 		return fmt.Errorf("failed to format source code: %w", err)
 	}
 	dir := filepath.Dir(vo.filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return fmt.Errorf("failed to create directories for file path %s: %w", vo.filePath, err)
 	}
-	if err := os.WriteFile(vo.filePath, formattedCode, 0644); err != nil {
+	if err := os.WriteFile(vo.filePath, formattedCode, 0600); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil
