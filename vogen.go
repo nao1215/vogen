@@ -96,7 +96,7 @@ func (vo *Vogen) validate(vos ...ValueObject) error {
 			return ErrStructNameEmpty
 		}
 		if len(v.Fields) == 0 {
-			return ErrInvalidFieldName
+			return ErrInvalidField
 		}
 		for _, f := range v.Fields {
 			if f.Name == "" {

@@ -3,7 +3,12 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-The vogen is a tool to generate value objects in golang. The vogen works both as a library and as a CLI. Both will automatically generate files with Value Objects defined.
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/vogen.svg)](https://pkg.go.dev/github.com/nao1215/vogen)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/vogen/coverage.svg)
+[![reviewdog](https://github.com/nao1215/vogen/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/vogen/actions/workflows/reviewdog.yml)
+[![MultiPlatformUnitTest](https://github.com/nao1215/vogen/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/vogen/actions/workflows/unit_test.yml)
+
+The vogen library is to generate value objects in golang. The vogen will automatically generate files with Value Objects defined.
   
 In golang, the only way to implement Value Objects is to use structs. Implementing Getter and Equal() on a newly defined Value Object (structure) is a simple and tedious task. The vogen package simplifies that task.
 
