@@ -13,13 +13,17 @@ import (
 // ValueObject is set to the metadata of the ValueObject to be automatically generated.
 type ValueObject struct {
 	// StructName is the name of the struct to be generated.
-	// required.
+	// Required field.
 	StructName string
 	// Fields is the list of fields to be generated.
-	// required.
+	// Required field.
 	Fields []Field
+	// Comments is the struct comment to be generated.
+	// No need to add '//' to indicate the start of a comment.
+	// Optional Field. If not specified, the struct comment is automatically generated.
+	Comments []string
 	// Imports is the list of imports to be generated.
-	// optional.
+	// Optional Field.
 	Imports []string
 }
 
@@ -27,12 +31,16 @@ type ValueObject struct {
 type Field struct {
 	// Name is the name of the field to be generated.
 	// The name specified in Name is always converted to Lowercase.
-	// required.
+	// Required field.
 	Name string
 	// Type is the type of the field to be generated.
 	// Type can be a primitive type or a Defined type. If you specify a Defined type, you must specify package import.
-	// required.
+	// Required field.
 	Type string
+	// Comments is the field comment to be generated.
+	// No need to add '//' to indicate the start of a comment.
+	// Optional Field. If not specified, the field comment is to be empty.
+	Comments []string
 }
 
 // lowercaseName returns the field name in lowercase.
@@ -120,25 +128,36 @@ func (vo *Vogen) Generate() error {
 // writeImports writes the import statements to the code.
 func (vo *Vogen) writeImports() {
 	importSet := map[string]struct{}{}
+
+	importSet["fmt"] = struct{}{}
 	for _, valueObject := range vo.valueObjects {
 		for _, imp := range valueObject.Imports {
 			importSet[imp] = struct{}{}
 		}
 	}
-	if len(importSet) > 0 {
-		vo.code = append(vo.code, "import (\n")
-		for imp := range importSet {
-			vo.code = append(vo.code, fmt.Sprintf("\t\"%s\"\n", imp))
-		}
-		vo.code = append(vo.code, ")\n\n")
+
+	vo.code = append(vo.code, "import (\n")
+	for imp := range importSet {
+		vo.code = append(vo.code, fmt.Sprintf("\t\"%s\"\n", imp))
 	}
+	vo.code = append(vo.code, ")\n\n")
 }
 
 // writeStruct writes the struct to the code.
 func (vo *Vogen) writeStruct(valueObject ValueObject) {
-	vo.code = append(vo.code, fmt.Sprintf("// %s represents a value object.\n", valueObject.StructName))
+	if len(valueObject.Comments) > 0 {
+		for _, comment := range valueObject.Comments {
+			vo.code = append(vo.code, fmt.Sprintf("// %s\n", comment))
+		}
+	} else {
+		vo.code = append(vo.code, fmt.Sprintf("// %s represents a value object.\n", valueObject.StructName))
+	}
+
 	vo.code = append(vo.code, fmt.Sprintf("type %s struct {\n", valueObject.StructName))
 	for _, field := range valueObject.Fields {
+		for _, comment := range field.Comments {
+			vo.code = append(vo.code, fmt.Sprintf("\t// %s\n", comment))
+		}
 		vo.code = append(vo.code, fmt.Sprintf("\t%s %s\n", field.lowercaseName(), field.Type))
 	}
 	vo.code = append(vo.code, "}\n\n")
