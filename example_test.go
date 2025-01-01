@@ -23,8 +23,20 @@ func ExampleVogen_Generate() {
 		vogen.ValueObject{
 			StructName: "Person",
 			Fields: []vogen.Field{
-				{Name: "Name", Type: "string", Comments: []string{"Name is the name of the person."}},
-				{Name: "Age", Type: "int", Comments: []string{"Age is the age of the person."}},
+				{
+					Name: "Name", Type: "string",
+					Comments: []string{"Name is the name of the person."},
+					Validators: []vogen.Validator{
+						vogen.NewStringLengthValidator(0, 120),
+					},
+				},
+				{
+					Name: "Age", Type: "int",
+					Comments: []string{"Age is the age of the person."},
+					Validators: []vogen.Validator{
+						vogen.NewPositiveValueValidator(),
+						vogen.NewMaxValueValidator(120),
+					}},
 			},
 			Comments: []string{
 				"Person is a Value Object to describe the feature of vogen.",
