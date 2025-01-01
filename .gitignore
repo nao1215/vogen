@@ -25,5 +25,5 @@ go.work.sum
 .env
 
 # Test file
-testdata/example_output.go
+testdata/*_output.go
 /coverage.*

@@ -10,7 +10,7 @@
 
 The vogen library is to generate value objects in golang. The vogen will automatically generate files with Value Objects defined.
   
-In golang, the only way to implement Value Objects is to use structs. Implementing Getter and Equal() on a newly defined Value Object (structure) is a simple and tedious task. The vogen package simplifies that task.
+The vogen automatically generates Getter, Constructor, Constructor with Validation, and Equal() based on metadata (vogen.ValueObject).
 
 ## Supported OS and go version
 - OS: Linux, macOS, Windows
@@ -50,19 +50,24 @@ func main() {
 		vogen.ValueObject{
 			StructName: "Person",
 			Fields: []vogen.Field{
-				{Name: "Name", Type: "string", Comments: []string{"Name is the name of the person."}},
-				{Name: "Age", Type: "int", Comments: []string{"Age is the age of the person."}},
+				{
+					Name: "Name", Type: "string",
+					Comments: []string{"Name is the name of the person."},
+					Validators: []vogen.Validator{
+						vogen.NewStringLengthValidator(0, 120),
+					},
+				},
+				{
+					Name: "Age", Type: "int",
+					Comments: []string{"Age is the age of the person."},
+					Validators: []vogen.Validator{
+						vogen.NewPositiveValueValidator(),
+						vogen.NewMaxValueValidator(120),
+					}},
 			},
 			Comments: []string{
 				"Person is a Value Object to describe the feature of vogen.",
 				"This is sample comment.",
-			},
-		},
-		// Use auto generated comments.
-		vogen.ValueObject{
-			StructName: "Address",
-			Fields: []vogen.Field{
-				{Name: "City", Type: "string"},
 			},
 		},
 	); err != nil {
@@ -102,6 +107,21 @@ func NewPerson(name string, age int) Person {
 	return Person{name: name, age: age}
 }
 
+// NewPersonStrictly creates a new instance of Person with validation.
+func NewPersonStrictly(name string, age int) (Person, error) {
+	o := Person{name: name, age: age}
+	if len(o.name) < 0 || len(o.name) > 120 {
+		return fmt.Errorf("struct 'Person' field 'Name' length is out of range: %d", len(o.name))
+	}
+	if o.age < 0 {
+		return fmt.Errorf("struct 'Person' field 'Age' value is negative: %d", age)
+	}
+	if o.age > 120 {
+		return fmt.Errorf("struct 'Person' field 'Age' value exceeds the maximum value: %d", age)
+	}
+	return o, nil
+}
+
 // Name returns the name field.
 func (o Person) Name() string {
 	return o.name
@@ -137,6 +157,16 @@ func (o Address) Equal(other Address) bool {
 	return o.City() == other.City()
 }
 ```
+
+### Validation list
+
+| Validator | Description |
+| --- | --- |
+| NewPositiveValueValidator() | Check if the value is positive. |
+| NewNegativeValueValidator() | Check if the value is negative. |
+| NewMaxValueValidator(max int) | Check if the value is less than to the maximum value. |
+| NewMinValueValidator(min int) | Check if the value is greater than to the minimum value. |
+| NewStringLengthValidator(min, max int) | Check if the length of the string is within the specified range. |
 
 ## License
 

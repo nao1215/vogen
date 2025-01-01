@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/iancoleman/strcase"
 )
 
 // ValueObject is set to the metadata of the ValueObject to be automatically generated.
@@ -30,7 +32,7 @@ type ValueObject struct {
 // Field is set to the metadata of the field to be automatically generated.
 type Field struct {
 	// Name is the name of the field to be generated.
-	// The name specified in Name is always converted to Lowercase.
+	// The name specified in Name is always converted to 'lowerCamelCase'.
 	// Required field.
 	Name string
 	// Type is the type of the field to be generated.
@@ -41,11 +43,16 @@ type Field struct {
 	// No need to add '//' to indicate the start of a comment.
 	// Optional Field. If not specified, the field comment is to be empty.
 	Comments []string
+	// Validators is the list of validators to be generated.
+	// The validation code is written within the New method. No check is made to see if the validation can be performed.
+	// For example, it is possible to generate code that performs minimum value validation (incorrect code) for a string type.
+	// Optional Field.
+	Validators []Validator
 }
 
-// lowercaseName returns the field name in lowercase.
-func (f Field) lowercaseName() string {
-	return strings.ToLower(f.Name)
+// lowerCamelCase returns the field name converted to 'lowerCamelCase'.
+func (f Field) lowerCamelCase() string {
+	return strcase.ToLowerCamel(f.Name)
 }
 
 // Vogen is the main struct of the vogen package.
@@ -119,6 +126,7 @@ func (vo *Vogen) Generate() error {
 	for _, valueObject := range vo.valueObjects {
 		vo.writeStruct(valueObject)
 		vo.writeConstructor(valueObject)
+		vo.writeConstructorWithValidator(valueObject)
 		vo.writeGetters(valueObject)
 		vo.writeEqualMethod(valueObject)
 	}
@@ -158,7 +166,7 @@ func (vo *Vogen) writeStruct(valueObject ValueObject) {
 		for _, comment := range field.Comments {
 			vo.code = append(vo.code, fmt.Sprintf("\t// %s\n", comment))
 		}
-		vo.code = append(vo.code, fmt.Sprintf("\t%s %s\n", field.lowercaseName(), field.Type))
+		vo.code = append(vo.code, fmt.Sprintf("\t%s %s\n", field.lowerCamelCase(), field.Type))
 	}
 	vo.code = append(vo.code, "}\n\n")
 }
@@ -168,8 +176,8 @@ func (vo *Vogen) writeConstructor(valueObject ValueObject) {
 	constructorArgs := []string{}
 	constructorInit := []string{}
 	for _, field := range valueObject.Fields {
-		constructorArgs = append(constructorArgs, fmt.Sprintf("%s %s", field.lowercaseName(), field.Type))
-		constructorInit = append(constructorInit, fmt.Sprintf("%s: %s", field.lowercaseName(), field.lowercaseName()))
+		constructorArgs = append(constructorArgs, fmt.Sprintf("%s %s", field.lowerCamelCase(), field.Type))
+		constructorInit = append(constructorInit, fmt.Sprintf("%s: %s", field.lowerCamelCase(), field.lowerCamelCase()))
 	}
 	vo.code = append(vo.code, fmt.Sprintf("// New%s creates a new instance of %s.\n", valueObject.StructName, valueObject.StructName))
 	vo.code = append(vo.code, fmt.Sprintf("func New%s(%s) %s {\n", valueObject.StructName, strings.Join(constructorArgs, ", "), valueObject.StructName))
@@ -177,12 +185,44 @@ func (vo *Vogen) writeConstructor(valueObject ValueObject) {
 	vo.code = append(vo.code, "}\n\n")
 }
 
+// writeConstructorWithValidator writes the constructor with validator to the code.
+func (vo *Vogen) writeConstructorWithValidator(valueObject ValueObject) {
+	existValidator := false
+	for _, field := range valueObject.Fields {
+		if len(field.Validators) == 0 {
+			continue
+		}
+		existValidator = true
+		break
+	}
+	if !existValidator {
+		return
+	}
+
+	constructorArgs := []string{}
+	constructorInit := []string{}
+	for _, field := range valueObject.Fields {
+		constructorArgs = append(constructorArgs, fmt.Sprintf("%s %s", field.lowerCamelCase(), field.Type))
+		constructorInit = append(constructorInit, fmt.Sprintf("%s: %s", field.lowerCamelCase(), field.lowerCamelCase()))
+	}
+	vo.code = append(vo.code, fmt.Sprintf("// New%sStrictly creates a new instance of %s with validation.\n", valueObject.StructName, valueObject.StructName))
+	vo.code = append(vo.code, fmt.Sprintf("func New%sStrictly(%s) (%s, error) {\n", valueObject.StructName, strings.Join(constructorArgs, ", "), valueObject.StructName))
+	vo.code = append(vo.code, fmt.Sprintf("\to := %s{%s}\n", valueObject.StructName, strings.Join(constructorInit, ", ")))
+	for _, field := range valueObject.Fields {
+		for _, validator := range field.Validators {
+			validator.write(vo, valueObject.StructName, field)
+		}
+	}
+	vo.code = append(vo.code, "\treturn o, nil\n")
+	vo.code = append(vo.code, "}\n\n")
+}
+
 // writeGetters writes the getter methods to the code.
 func (vo *Vogen) writeGetters(valueObject ValueObject) {
 	for _, field := range valueObject.Fields {
-		vo.code = append(vo.code, fmt.Sprintf("// %s returns the %s field.\n", field.Name, field.lowercaseName()))
+		vo.code = append(vo.code, fmt.Sprintf("// %s returns the %s field.\n", field.Name, field.lowerCamelCase()))
 		vo.code = append(vo.code, fmt.Sprintf("func (o %s) %s() %s {\n", valueObject.StructName, field.Name, field.Type))
-		vo.code = append(vo.code, fmt.Sprintf("\treturn o.%s\n", field.lowercaseName()))
+		vo.code = append(vo.code, fmt.Sprintf("\treturn o.%s\n", field.lowerCamelCase()))
 		vo.code = append(vo.code, "}\n\n")
 	}
 }
